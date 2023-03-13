@@ -1,12 +1,8 @@
-
-
-
 import numpy as np
 import cv2 as cv
 
-
-
 import math
+
 def non():
     font = cv.FONT_HERSHEY_SIMPLEX
 
@@ -35,6 +31,62 @@ def non():
     cv.imwrite("scan000_gauss9.tif", res)
     cv.waitKey(0)
     cv.destroyAllWindows()
+
+def old_main():
+    path = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/scan0001.tif'
+
+    # path = 'C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/scan0001.tif'
+
+    image = cv.imread(path)
+
+    bin_img = binaryze(image, threshold=160)  # 160
+    # cv.imwrite('C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/binar.tif', bin_img)
+
+    rects = find_contours(bin_img, more_than=2000_000)  # 2000_000
+    print(rects)
+
+    i = 1
+    for rect in rects:  # проходимся по найденным контурам
+        # cropped_images = crop_image(image, rect)
+        box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
+        box = np.int0(box)  # округление координат
+        # x_start, y_start = min(box[0:2][0][0], box[0:2][1][0]), min(box[0:2][0][1], box[0:2][1][1])
+        # x_stop, y_stop = max(box[2:][0][0], box[2:][1][0]), max(box[2:][0][1], box[2:][1][1])
+
+        x_s = [pair[0] for pair in box]
+        y_s = [pair[1] for pair in box]
+
+        print(x_s, y_s)
+
+        x_start, y_start = min(x_s), min(y_s)
+        x_stop, y_stop = max(x_s), max(y_s)
+
+        print(x_start, y_start)
+        print(x_stop, y_stop)
+
+        crop = image[y_start:y_stop, x_start:x_stop]
+
+        y_range, x_range, _ = crop.shape
+        cv.namedWindow("cropped_images", cv.WINDOW_NORMAL)  # создаем главное окно
+        cv.resizeWindow('cropped_images', int(x_range // 8), int(y_range // 8))  # уменьшаем картинку в 3 раза
+        cv.imshow('cropped_images', crop)
+
+        # bin_img_2 = binaryze(crop, threshold=135)
+        # rects_2 = find_contours(bin_img_2, more_than=2000_000)  # 2000_000
+        #
+        # for rect in rects_2:  # проходимся по найденным контурам
+        #     box_2 = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
+        #     box_2 = np.int0(box_2)  # округление координа
+        #
+        #     for i in range(4):
+        #         a_start_x, a_start_y = box_2[i][0], box_2[i][1]
+        #
+        #         angle_crop = image[a_start_y-300:a_start_y+300, a_start_x-300:a_start_x+300]
+        #         print(angle_crop)
+        #         cv.imshow('angcfle', angle_crop)
+        #         cv.waitKey(0)
+        i += 1
+        cv.waitKey(0)
 
 
 # на вход подать изображение и область (распознанную) по которой обрезать
@@ -126,30 +178,36 @@ def binarization_analyzer():
         pass
 
     # имя файла, который будем анализировать
-    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/scan0001.tif'
-    #fn = 'C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/1.jpg'
+    fn = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/1.tif'
+    fn = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/scan0001.tif'
+    fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/1.tif'
+    fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/super_crop/3.tif'
+
 
     img = cv.imread(fn)
 
     #img = cv.GaussianBlur(img, (25, 25), 9)
-    #img = cv2.medianBlur(img, 21)
+    #img = cv.medianBlur(img, 21)
 
     y_range, x_range, _ = img.shape
 
     cv.namedWindow("result", cv.WINDOW_NORMAL)  # создаем главное окно
-    cv.resizeWindow('result', int(x_range // 2), int(y_range // 2))  # уменьшаем картинку в 3 раза
+    cv.resizeWindow('result', int(x_range // 9), int(y_range // 9))  # уменьшаем картинку в 3 раза
     cv.namedWindow("settings")  # создаем окно настроек
 
     # создаем 6 бегунков для настройки начального и конечного цвета фильтра
-    cv.createTrackbar('low', 'settings', 0, 255, nothing)
-    cv.createTrackbar('high', 'settings', 0, 255, nothing)
+    cv.createTrackbar('thresh', 'settings', 0, 255, nothing)
+    cv.createTrackbar('high', 'settings', 0, 1000, nothing)
 
     cv.resizeWindow('settings', 700, 140)
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     while True:
+        img = cv.imread(fn)
+        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
         #######flag, img = cap.read()
         # считываем значения бегунков
-        h1 = cv.getTrackbarPos('low', 'settings')
+        h1 = cv.getTrackbarPos('thresh', 'settings')
         s1 = cv.getTrackbarPos('high', 'settings')
 
         #thresh = cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY_INV, 1001, 0 + h1 // 10)
@@ -161,10 +219,32 @@ def binarization_analyzer():
         # thresh = cv.erode(thresh, kernel)
         # thresh = cv2.dilate(thresh, kernel)
 
-        ret, thresh = cv.threshold(img, h1, s1, cv.THRESH_BINARY)
+        ret, thresh = cv.threshold(img, h1, 255, cv.THRESH_BINARY)
+        #ret, thresh = cv.threshold(img, h1, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+
+        contours0, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+
+        for cnt in contours0:
+            rect = cv.minAreaRect(cnt)  # пытаемся вписать прямоугольник
+            area = int(rect[1][0] * rect[1][1])  # вычисление площади прямоугольника
+            box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
+            box = np.int0(box)  # округление координат
+            ellipse = cv.fitEllipse(cnt)
+
+            #if area > s1*10:
+            #if 500_0000 < area < 600_0000:  # если площадь прямогульника больше  < 9_000_000
+            if 100 < area < 400:
+                print(f'area params: {area}')
+                cv.drawContours(img, [box], 0, (0, 0, 255), 8)  # отрисовка прямогуольников размером больше 700_000
+                color_yellow = (0, 255, 255)
+                center = (int(rect[0][0]), int(rect[0][1]))
+                cv.putText(img, f'{area}', (center[0] + 20, center[1] - 20),
+                           cv.FONT_HERSHEY_SIMPLEX, 1, color_yellow, 2)
+                cv.imwrite('C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/rer.tif', img)
 
         # cv2.resizeWindow('result', 1000, 1000)  # уменьшаем картинку в 3 раза
-        cv.imshow('result', thresh)
+            cv.imshow('result', thresh)
 
         ch = cv.waitKey(5)
         if ch == 27:
@@ -175,8 +255,13 @@ def binarization_analyzer():
 
 def contours_finder():
     fn = 'C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/1.jpg'
-    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/scan0001.tif'
-    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/binar.tif'
+    fn = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/crop.tif'
+    fn = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/scan0006.tif'
+    #fn = 'C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/binar.tif'
+    fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/crop/1.tif'
+    # 5368930 5367252 5365713 5374896 5364501 5369074 5369449 5362984 5362175 5360740 5379833 5386805
+    fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/2.tif'
+
     img = cv.imread(fn)
 
     cv.namedWindow("result", cv.WINDOW_NORMAL)  # создаем главное окно
@@ -184,7 +269,7 @@ def contours_finder():
     cv.resizeWindow('result', int(x_range // 9), int(y_range // 9))  # уменьшаем картинку в 3 раза
 
     gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    ret, thresh = cv.threshold(gray_img, 135, 255, cv.THRESH_BINARY)
+    ret, thresh = cv.threshold(gray_img, 133, 255, cv.THRESH_BINARY)
 
     contours0, hierarchy = cv.findContours(thresh.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
@@ -198,22 +283,20 @@ def contours_finder():
 
         area = int(rect[1][0] * rect[1][1])  # вычисление площади
 
-        if area > 3:
-            contours_lst.append(area)
-
-        if area > 170:  # если площадь прямогульника больше  < 9_000_000
+        if 5_550_000 > area > 5_300_000:  # если площадь прямогульника больше  < 9_000_000
+        #if 350 > area > 150:
             #print(f'rect params: {rect}')
            # print(area)  # примерно должно быть 6_500_500
             cv.drawContours(img, [box], 0, (0, 0, 255), 2)      # отрисовка прямогуольников размером больше 700_000
-
+            contours_lst.append(area)
             color_yellow = (0, 255, 255)
             center = (int(rect[0][0]), int(rect[0][1]))
             cv.putText(img, f'{area}', (center[0] + 20, center[1] - 20),
                        cv.FONT_HERSHEY_SIMPLEX, 1, color_yellow, 2)
 
-    cv.imwrite('C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/res.tif', img)
+    cv.imwrite('C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/rer.tif', img)
     cv.imshow('result', img)
-    cv.imwrite('C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/res.tif', img)
+
     cv.waitKey(0)
     cv.destroyAllWindows()
 
@@ -221,81 +304,147 @@ def contours_finder():
     print(contours_lst)
 
 
-def binaryze(img_path, threshold=100):
+from modules import *
+
+
+def croppp():
+    fn = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/scan0007.tif'
+    img = cv.imread(fn)
+
+    bin_img = binaryze(img, 160)
+
+    rects = find_contours(bin_img, 2000_000)
+
+    i = 0
+
+    for rect in rects:  # проходимся по найденным контурам
+
+        box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
+        box = np.int0(box)  # округление координат
+
+        x_s = [pair[0] for pair in box]
+        y_s = [pair[1] for pair in box]
+
+        x_start, y_start = min(x_s), min(y_s)
+        x_stop, y_stop = max(x_s), max(y_s)
+
+        print(x_start, y_start)
+        print(x_stop, y_stop)
+
+        crop = img[y_start:y_stop, x_start:x_stop]
+
+        cv.imwrite(f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/crop/{i}.tif', crop)
+        i += 1
+
+
+def second_crop(path=None, path_to_save=None):
+    if path is None:
+        path = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/crop/0.tif'
+    image = cv.imread(path)
+    bin_img_2 = binaryze(image, threshold=130)
+    #rects_2 = find_contours(bin_img_2, more_than=292_000, less_then=5_700_000)  # 2000_000
+    rects_2 = find_contours(bin_img_2, more_than=5_300_000, less_then=5_550_000)
+
+    rect = rects_2[0]
+    box_2 = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
+    box_2 = np.int0(box_2)  # округление координа
+
+    angle = rect[2]
+
+    if angle > 45:  # если неправильный угол изображения
+        box_2 = np.insert(box_2, 0, box_2[-1],  axis = 0)     # меняем обход точек
+        box_2 = box_2[:-1]
+
+    area_dots = []  # сохряняются количество найденных точек
+
+    for i in range(4):      # по 4 точкам смотрим окрсетности
+        a_start_x, a_start_y = box_2[i][0], box_2[i][1]
+        angle_crop = image[a_start_y-100:a_start_y+100, a_start_x-100:a_start_x+100]
+        area_dots.append(find_circles(angle_crop))
+
+    if analyze_rot(area_dots):   # определяем нужно ли попорачитвать
+        crop = crop_image(image, rect, 180)
+    else:
+        crop = crop_image(image, rect, -90)
+    cv.imwrite(path_to_save, crop)
+        # #cv.imshow('angcfle', angle_crop)
+        # cv.waitKey(0)
+        # cv.imwrite(f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/super_crop/{i}.tif', angle_crop)
+
+
+
+
+#croppp()
+#contours_finder()
+#binarization_analyzer()
+
+#econd_crop()
+
+# for i in range(10):
+#     path = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/crop/{i}.tif'
+#     path_to_save = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/rot/{i}.tif'
+#     second_crop(path, path_to_save)
+#     print()
+
+
+
+# for i in range(10):
+#     p = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/rot/{i}.tif'
+#     r = cv.imread(p)
+#     print(r.shape)
+
+def find_circles_analyze():
     def nothing(*arg):
         pass
 
-    image = cv.imread(img_path)
+    fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/super_crop/3.tif'
 
-    y_range, x_range, _ = image.shape
+    img = cv.imread(fn)
+
+    y_range, x_range, _ = img.shape
+
     cv.namedWindow("result", cv.WINDOW_NORMAL)  # создаем главное окно
-    cv.resizeWindow('result', int(x_range // 2), int(y_range // 2))  # уменьшаем картинку в 3 раза
+    cv.resizeWindow('result', int(x_range // 9), int(y_range // 9))  # уменьшаем картинку в 3 раза
+    cv.namedWindow("settings")  # создаем окно настроек
 
-    gray_img = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    # создаем 6 бегунков для настройки начального и конечного цвета фильтра
+    cv.createTrackbar('thresh', 'settings', 134, 255, nothing)
+    cv.createTrackbar('high', 'settings', 0, 1000, nothing)
 
-    ret, thresh = cv.threshold(gray_img, threshold, 255, cv.THRESH_BINARY)
+    cv.resizeWindow('settings', 700, 140)
+    img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    while True:
+        img = cv.imread(fn)
+        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-    cv.imshow('result', thresh)
 
-    cv.waitKey(0)
+        h1 = cv.getTrackbarPos('thresh', 'settings')
+        s1 = cv.getTrackbarPos('high', 'settings')
+
+        ret, thresh = cv.threshold(gray, h1, 255, cv.THRESH_BINARY)
+
+        contours0, hierarchy = cv.findContours(thresh.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        for cnt in contours0:
+            perimeter = cv.arcLength(cnt, True)
+            if 65 > perimeter > 25:
+                ellipse = cv.fitEllipse(cnt)
+                print(perimeter)
+                cv.ellipse(img, ellipse, (0, 0, 255), 2)
+
+        cv.imwrite('C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/rer.tif', img)
+
+            # cv2.resizeWindow('result', 1000, 1000)  # уменьшаем картинку в 3 раза
+        cv.imshow('result', img)
+
+        ch = cv.waitKey(5)
+        if ch == 27:
+            break
 
     cv.destroyAllWindows()
-    return thresh
 
-
-
-
-
-# на вход подается бинаризированное изображение
-# на выходе координаты контуров
-
-def find_contours(bin_image, more_than=0):
-    contours0, hierarchy = cv.findContours(bin_image, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-    rectangles = []
-    for cnt in contours0:
-        rect = cv.minAreaRect(cnt)  # пытаемся вписать прямоугольник
-        area = int(rect[1][0] * rect[1][1])  # вычисление площади прямоугольника
-        if area > more_than:
-            rectangles.append(rect)
-
-    rectangles.sort()
-    del rectangles[-1] # удаляем максимальный прямогуольник
-    return rectangles
-
-
-def crop_image(img, rect):
-    # на вход подать изображение и область (распознанную) по которой обрезать
-
-    # rect ->  ((центр прямогуольника), (размер прямоугольника), угол наклона)
-    center, size, angle = rect[0], rect[1], rect[2]
-    center, size = tuple(map(int, center)), tuple(map(int, size))
-
-    # get row and col num in img
-    height, width = img.shape[0], img.shape[1]
-
-    # calculate the rotation matrix
-    M = cv.getRotationMatrix2D(center=center, angle=angle, scale=1)  # формирует матрицу поворота
-    # rotate the original image
-    img_rot = cv.warpAffine(img, M, (width, height))  # вращает изображение
-
-    # now rotated rectangle becomes vertical, and we crop it
-    img_crop = cv.getRectSubPix(img_rot, size, center)
-
-    return img_crop
+#find_circles_analyze()
 
 
 if __name__ == '__main__':
-    #HSV_analyzer()
-    #contours_finder()
-    #binarization()
-    #binarization_analyzer()
-    #contours_finder()
+    main()
 
-    path = 'C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/scan0001.tif'
-    bin_img = binaryze(path, threshold=220)
-    #cv.imwrite('C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/binar.tif', bin_img)
-    print(find_contours(bin_img, more_than=6_000))
-
-    # 1) бинаризовать изображение и обрезать изображения фоторезиста просто от белого листа
-    # 2) уже на вырезанных иозображениях искать контуры
-    # 3) по найденным контурам поворачивать изображения и сохранять результат
