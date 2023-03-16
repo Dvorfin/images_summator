@@ -182,7 +182,8 @@ def binarization_analyzer():
     fn = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/scan0001.tif'
     fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/1.tif'
     fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/super_crop/3.tif'
-
+    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/scan0001.tif'
+    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/1.jpg'
 
     img = cv.imread(fn)
 
@@ -196,7 +197,7 @@ def binarization_analyzer():
     cv.namedWindow("settings")  # создаем окно настроек
 
     # создаем 6 бегунков для настройки начального и конечного цвета фильтра
-    cv.createTrackbar('thresh', 'settings', 0, 255, nothing)
+    cv.createTrackbar('thresh', 'settings', 134, 255, nothing)
     cv.createTrackbar('high', 'settings', 0, 1000, nothing)
 
     cv.resizeWindow('settings', 700, 140)
@@ -219,10 +220,10 @@ def binarization_analyzer():
         # thresh = cv.erode(thresh, kernel)
         # thresh = cv2.dilate(thresh, kernel)
 
-        ret, thresh = cv.threshold(img, h1, 255, cv.THRESH_BINARY)
+        #ret, thresh = cv.threshold(img, h1, 255, cv.THRESH_BINARY)
         #ret, thresh = cv.threshold(img, h1, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 
-        contours0, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        contours0, hierarchy = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
 
         for cnt in contours0:
@@ -230,22 +231,26 @@ def binarization_analyzer():
             area = int(rect[1][0] * rect[1][1])  # вычисление площади прямоугольника
             box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
             box = np.int0(box)  # округление координат
-            ellipse = cv.fitEllipse(cnt)
-
+            print(area)
             #if area > s1*10:
-            #if 500_0000 < area < 600_0000:  # если площадь прямогульника больше  < 9_000_000
-            if 100 < area < 400:
+            if 5_0 < area < 1060291:  # если площадь прямогульника больше  < 9_000_000
+            #if 100 < area < 400:
                 print(f'area params: {area}')
                 cv.drawContours(img, [box], 0, (0, 0, 255), 8)  # отрисовка прямогуольников размером больше 700_000
                 color_yellow = (0, 255, 255)
                 center = (int(rect[0][0]), int(rect[0][1]))
                 cv.putText(img, f'{area}', (center[0] + 20, center[1] - 20),
                            cv.FONT_HERSHEY_SIMPLEX, 1, color_yellow, 2)
-                cv.imwrite('C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/rer.tif', img)
+
+                fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/boba.tif'
+                cv.imwrite(fn, img)
+
+            break
+
 
         # cv2.resizeWindow('result', 1000, 1000)  # уменьшаем картинку в 3 раза
-            cv.imshow('result', thresh)
-
+            cv.imshow('result', img)
+        break
         ch = cv.waitKey(5)
         if ch == 27:
             break
@@ -261,6 +266,7 @@ def contours_finder():
     fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/crop/1.tif'
     # 5368930 5367252 5365713 5374896 5364501 5369074 5369449 5362984 5362175 5360740 5379833 5386805
     fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/2.tif'
+    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/scan0001.tif'
 
     img = cv.imread(fn)
 
@@ -294,7 +300,7 @@ def contours_finder():
             cv.putText(img, f'{area}', (center[0] + 20, center[1] - 20),
                        cv.FONT_HERSHEY_SIMPLEX, 1, color_yellow, 2)
 
-    cv.imwrite('C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/rer.tif', img)
+    #cv.imwrite('C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/rer.tif', img)
     cv.imshow('result', img)
 
     cv.waitKey(0)
@@ -333,7 +339,7 @@ def croppp():
 
         crop = img[y_start:y_stop, x_start:x_stop]
 
-        cv.imwrite(f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/crop/{i}.tif', crop)
+        #cv.imwrite(f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/crop/{i}.tif', crop)
         i += 1
 
 
@@ -376,7 +382,7 @@ def second_crop(path=None, path_to_save=None):
 
 #croppp()
 #contours_finder()
-#binarization_analyzer()
+
 
 #econd_crop()
 
@@ -447,4 +453,6 @@ def find_circles_analyze():
 
 if __name__ == '__main__':
     main()
+
+    #binarization_analyzer()
 

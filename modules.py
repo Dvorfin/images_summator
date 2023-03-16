@@ -3,16 +3,16 @@ import numpy as np
 
 
 def binaryze(image, threshold=220):
-    #y_range, x_range, _ = image.shape
-    #cv.namedWindow(f"binaryze {threshold}", cv.WINDOW_NORMAL)  # создаем главное окно
-    #cv.resizeWindow(f"binaryze {threshold}", int(x_range // 9), int(y_range // 9))  # уменьшаем картинку в 3 раза
+    y_range, x_range, _ = image.shape
+    cv.namedWindow(f"binaryze {threshold}", cv.WINDOW_NORMAL)  # создаем главное окно
+    cv.resizeWindow(f"binaryze {threshold}", int(x_range // 9), int(y_range // 9))  # уменьшаем картинку в 3 раза
 
     gray_img = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
     ret, thresh = cv.threshold(gray_img, threshold, 255, cv.THRESH_BINARY)
-    #cv.imshow(f"binaryze {threshold}", thresh)
-    #cv.waitKey(0)
-    #cv.destroyAllWindows()
+    cv.imshow(f"binaryze {threshold}", thresh)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
     return thresh
 
 
@@ -30,14 +30,14 @@ def find_contours(bin_image, more_than=0, less_then=10_000_000):
         if less_then > area > more_than:
             rectangles.append(rect)
 
-            # box = cv.boxPoints(rect)
-            # box = np.int0(box)  # округление координат
-            # cv.drawContours(bin_image, [box], 0, (0, 0, 255), 8)
-            # y_range, x_range = bin_image.shape
-            # cv.namedWindow("bin_image", cv.WINDOW_NORMAL)  # создаем главное окно
-            # cv.resizeWindow('bin_image', int(x_range // 8), int(y_range // 8))  # уменьшаем картинку в 3 раза
-            # cv.imshow('bin_image', bin_image)
-            # cv.waitKey(0)
+            box = cv.boxPoints(rect)
+            box = np.int0(box)  # округление координат
+            cv.drawContours(bin_image, [box], 0, (0, 0, 255), 8)
+            y_range, x_range = bin_image.shape
+            cv.namedWindow("bin_image", cv.WINDOW_NORMAL)  # создаем главное окно
+            cv.resizeWindow('bin_image', int(x_range // 8), int(y_range // 8))  # уменьшаем картинку в 3 раза
+            cv.imshow('bin_image', bin_image)
+            cv.waitKey(0)
             #print(area)
 
     #if len(rectangles) >= 2:
@@ -141,6 +141,9 @@ def crop_scans_crop(image):
     for i in range(4):      # по 4 точкам смотрим окрсетности
         a_start_x, a_start_y = box[i][0], box[i][1]
         angle_crop = image[a_start_y-100:a_start_y+100, a_start_x-100:a_start_x+100]
+
+        cv.imshow('angle_crop', angle_crop)
+
         area_dots.append(find_circles(angle_crop))
 
     rotated = analyze_rot(area_dots)
@@ -156,7 +159,9 @@ def crop_scans_crop(image):
 def main():
     show_crop_res = False
     path = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/'
+    path = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/'
     path_to_save = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/ultra/'
+    path_to_save = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/res/'
 
     cnt = 0
     for i in range(1, 2):
@@ -176,10 +181,10 @@ def main():
 
             if is_rot:
                 print(f'Saved pic: {p} | rotated')
-                #cv.imwrite(p, res)
+                cv.imwrite(p, res)
             else:
                 print(f'Saved pic {p} | original')
-                #cv.imwrite(p, res)
+                cv.imwrite(p, res)
 
             cnt += 1
             if show_crop_res:
@@ -192,3 +197,55 @@ def main():
 
         print('-' * 40)
         print()
+
+#main()
+
+def show_contours(bin_image, more_than=0, less_then=10000_000_000):
+    contours0, hierarchy = cv.findContours(bin_image.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+   # contours0, hierarchy = cv.findContours(bin_image.copy(),  cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    edged = cv.Canny(bin_image, 15, 50)
+    #contours0, hierarchy = cv.findContours(edged, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+    cv.imshow('Canny Edges After Contouring', edged)
+    contours0, hierarchy = cv.findContours(edged.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    rectangles = []
+
+    for cnt in contours0:
+        rect = cv.minAreaRect(cnt)  # пытаемся вписать прямоугольник
+        area = int(rect[1][0] * rect[1][1])  # вычисление площади прямоугольника
+        print(area)
+
+        if less_then > area > more_than:
+            rectangles.append(rect)
+
+            box = cv.boxPoints(rect)
+            box = np.int0(box)  # округление координат
+            cv.drawContours(bin_image, [box], 0, (0, 0, 255), 2)
+            y_range, x_range = bin_image.shape
+            cv.namedWindow("bin_image", cv.WINDOW_NORMAL)  # создаем главное окно
+            cv.resizeWindow('bin_image', int(x_range // 8), int(y_range // 8))  # уменьшаем картинку в 3 раза
+
+
+    cv.imshow('bin_image', bin_image)
+    cv.waitKey(0)
+            # print(area)
+
+
+p = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/2.png'
+#p = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/brightness_0/scan0001.tif'
+img = cv.imread(p)
+gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+show_contours(gray_img)
+
+
+# 1) исходное изображение бинаризуется
+# 2) найденные контуры вырезаются
+# 3) проходимся по каждому найденному контуру
+# 4) снова бинаризуем изображение
+# 5) находим минимальный контур, по кот. далее будет обрезаться конечное изображение
+# 6) проходимся по углам минимального найденного контура и смотрим их окрестности на наличие реперных знаков
+# 7) определяем по расположению реперных знаков поворот и определеяем добавочный угол
+# 8)
+
+#
+#
+#
