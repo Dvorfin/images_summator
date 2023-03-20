@@ -3,16 +3,16 @@ import numpy as np
 
 
 def binaryze(image, threshold=220):
-    y_range, x_range, _ = image.shape
-    cv.namedWindow(f"binaryze {threshold}", cv.WINDOW_NORMAL)  # создаем главное окно
-    cv.resizeWindow(f"binaryze {threshold}", int(x_range // 9), int(y_range // 9))  # уменьшаем картинку в 3 раза
+    # y_range, x_range, _ = image.shape
+    # cv.namedWindow(f"binaryze {threshold}", cv.WINDOW_NORMAL)  # создаем главное окно
+    # cv.resizeWindow(f"binaryze {threshold}", int(x_range // 9), int(y_range // 9))  # уменьшаем картинку в 3 раза
 
     gray_img = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
     ret, thresh = cv.threshold(gray_img, threshold, 255, cv.THRESH_BINARY)
-    cv.imshow(f"binaryze {threshold}", thresh)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # cv.imshow(f"binaryze {threshold}", thresh)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
     return thresh
 
 
@@ -38,7 +38,7 @@ def find_contours(bin_image, more_than=0, less_then=10_000_000):
             cv.resizeWindow('bin_image', int(x_range // 8), int(y_range // 8))  # уменьшаем картинку в 3 раза
             cv.imshow('bin_image', bin_image)
             cv.waitKey(0)
-            #print(area)
+            print(area)
 
     #if len(rectangles) >= 2:
     #    del rectangles[0]  # удаляем максимальный прямогуольник
@@ -102,7 +102,7 @@ def analyze_rot(lst):
 
 
 def crop_scans(img):
-    bin_img = binaryze(img, 160)
+    bin_img = binaryze(img, 155)
     rects = find_contours(bin_img, 2000_000)
     cropped_imgs = []
 
@@ -125,8 +125,10 @@ def crop_scans(img):
 
 
 def crop_scans_crop(image):
-    bin_img = binaryze(image, threshold=130)
-    rects = find_contours(bin_img, more_than=5_300_000, less_then=5_550_000)
+    bin_img = binaryze(image, threshold=141)
+    #rects = find_contours(bin_img, more_than=5_300_000, less_then=5_550_000)
+    rects = find_contours(bin_img, more_than=5723870, less_then=7588490)
+
     rect = rects[0]
     box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
     box = np.int0(box)  # округление координа
@@ -160,11 +162,14 @@ def main():
     show_crop_res = False
     path = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/'
     path = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/'
+
+    path = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/brightness_128/'
     path_to_save = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/ultra/'
     path_to_save = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/res/'
 
     cnt = 0
-    for i in range(1, 2):
+    r = [1, 3, 4, 5, 6, 7, 8, 9]
+    for i in r:
         p = path + f'scan000{i}.tif'
         scan = cv.imread(p)
         cropped_scan = crop_scans(scan)
@@ -230,11 +235,11 @@ def show_contours(bin_image, more_than=0, less_then=10000_000_000):
             # print(area)
 
 
-p = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/2.png'
-#p = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/brightness_0/scan0001.tif'
-img = cv.imread(p)
-gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-show_contours(gray_img)
+# p = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/2.png'
+# #p = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/brightness_0/scan0001.tif'
+# img = cv.imread(p)
+# gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+# show_contours(gray_img)
 
 
 # 1) исходное изображение бинаризуется

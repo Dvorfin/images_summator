@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-from ito_lr_1 import *
+#fffc cv from ito_lr_1 import *
 
 def binaryze(image, threshold=220):
     y_range, x_range, _ = image.shape
@@ -204,6 +204,8 @@ def find_contours_rebuild(img, more_than=0, less_then=2000):
     for cnt in contours0:
         if less_then > cnt.shape[0] > more_than:    # если размер контура найден
 
+            print(f'Size of contour: {cnt.shape[0]}')
+
             arr = np.empty((0, 2), int) # пересобираем массив точек контура в формат [[x1, y1], [x2, y2], [x3, y3]....]
             for p in cnt:
                 for point in p:
@@ -307,6 +309,117 @@ def find_contours_rebuild(img, more_than=0, less_then=2000):
     return lines_of_rectrangle
 
 
+def find_countours_rebuild_2(img, more_than=0, less_then=2000):
+    bin = binaryze(img, 133)
+    contours0, hierarchy = cv.findContours(image=bin.copy(), mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_NONE)
+
+    # массив, куда будут записаны координаты 4-х линий прямоугольника
+    lines_of_rectrangle = [[], [], [], []]
+    # множество с точками контура
+    coords_set = set()
+
+    for cnt in contours0:
+        if less_then > cnt.shape[0] > more_than:  # если размер контура найден
+            print(f'Size of contour: {cnt.shape[0]}')
+            for p in cnt:
+                for point in p:
+                    coords_set.add((point[0], point[1]))
+
+    # поиск точки с минимальным иксом
+    A = sorted(coords_set)
+    min_x = A[0][0]  # выбираем минимальный x
+    A1 = []
+    for p in A:  # проходимся по всем точкам с минимальными иксами
+        if p[0] != min_x:  # если минимальный x изменился
+            break
+        A1.append(p[1])     # добавляем значения y
+    A = (min_x, sum(A1) // len(A1))     # записываем минимальный x и средний y
+
+    # поиск точки с минимальным игриком
+    B = sorted(coords_set, key=lambda point: point[1])
+    #print(B)
+    min_y = B[0][1]
+    B1 = []
+    for p in B:
+        if p[1] != min_y:
+            break
+        B1.append(p[0])
+    B = (sum(B1) // len(B1), min_y)
+
+    # поиск точки с максимальным иксом
+    C = sorted(coords_set, reverse=True)
+    max_x = C[0][0]
+    C1 = []
+    for p in C:
+        if p[0] != max_x:
+            break
+        C1.append(p[1])
+    C = (max_x, sum(C1) // len(C1))
+
+    # поиск точки с максимальным игриком
+    D = sorted(coords_set, reverse=True, key=lambda point: point[1])
+    max_y = D[0][1]
+    D1 = []
+    for p in D:
+        if p[1] != max_y:
+            break
+        D1.append(p[0])
+    D = (sum(D1) // len(D1), max_y)
+
+    print(f'Min x: {A}')
+    print(f'Min y: {B}')
+    print(f'Max x: {C}')
+    print(f'Max y: {D}')
+
+    # отрисовка 4 точек с их координатами
+    angle_points = [A, B, C, D]
+    for point in angle_points:
+        cv.circle(img, point, 5, (0, 250, 0), 2)
+        cv.putText(img, f'{point}', (point[0] - 40, point[1] + 20),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 250), 1)
+
+
+#--------------------------------------------------------------
+    for cnt in contours0:
+        if less_then > cnt.shape[0] > more_than:
+            # цвета линий
+            colors = [(10, 0, 204), (150, 10, 0), (0, 255, 0), (255, 255, 0)]
+
+            # координаты угов
+            angles = [[A, B], [B, C], [C, D], [D, A]]
+
+            # проходимся по всем углам
+            for i in range(4):
+                point1, point2 = angles[i]  # берем 2 соседние точки
+                # вычисялем ширину и высоту прямогуольника, построенного по 2 угловым точкам
+                x_r_min, x_r_max = min(point1[0], point2[0]), max(point1[0], point2[0])
+                y_r_min, y_r_max = min(point1[1], point2[1]), max(point1[1], point2[1])
+
+                # проходимся по точкам контура
+                for p in cnt:
+                    for point in p:
+                        point = np.int0(point)
+                        # если точка контура лежит в пределах прямогольника, то записываем ее
+                        if (x_r_min + 1 < point[0] < x_r_max - 1) and (y_r_min + 1 < point[1] < y_r_max - 1):
+                            # print(point)
+                            # cv.drawContours(img, cnt, -1, (0, 255, 0), 2, cv.LINE_AA)   # отрсиоввываем найденный контур
+                            cv.circle(img, point, 1, colors[i], 2)
+                            lines_of_rectrangle[i].append(point)
+
+                # cv.drawContours(img, [box], 0, (255, 0, 100), 2)
+
+    y_range, x_range, _ = img.shape
+    cv.namedWindow('countours', cv.WINDOW_NORMAL)  # создаем главное окно
+    cv.resizeWindow('countours', int(x_range // 7), int(y_range // 7))  # уменьшаем картинку в 3 раза
+    cv.imshow('countours', img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+    cv.imwrite('res.tif', img)
+    return lines_of_rectrangle
+
+   # cv.imshow('res', img)
+
 def coefficient_reg_inv(x, y):
     size = len(x)
     # формируем и заполняем матрицу размерностью 2x2
@@ -327,14 +440,51 @@ def coefficient_reg_inv(x, y):
     return ww[1], ww[0]
 
 
-
 if __name__ == '__main__':
 
-    path = 'Screenshot_1.png'
+    # path = '1.png'
+    # img = cv.imread(path)
+    # #lines = find_contours_rebuild(img, 1600, 2000)
+    # find_angles(img, 1600, 2000)
+
+    # path = '1.png'
+    # img = cv.imread(path)
+    # find_angles(img, 1600, 2000)
+
+    # path = '2.png'
+    # img = cv.imread(path)
+    # find_countours_rebuild_2(img, 1700, 2000)
+
+
     #path = '2.tif'
     #path = '0.tif'
 
+    # path = 'scan1.png'
+    # img = cv.imread(path)
+    # #lines = find_contours_rebuild(img, 2000, 4000)
+    # find_countours_rebuild_2(img, 2000, 4000)
+
+    # path = 'scan2.png'
+    # img = cv.imread(path)
+    # # lines = find_contours_rebuild(img, 3600, 3700)
+    # find_countours_rebuild_2(img, 3600, 3700)
+
+
+    # path = '0.tif'
+    # img = cv.imread(path)
+    #find_countours_rebuild_2(img, 9000, 12300)
+
+
+    path = '2.tif'
     img = cv.imread(path)
+    find_countours_rebuild_2(img, 9000, 9791)
+
+    # Size
+    # of
+    # contour: 12308
+    # Size
+    # of
+    # contour: 9587
 
 
 
@@ -342,35 +492,41 @@ if __name__ == '__main__':
     #find_contours(img, 9000, 9600)
 
     #lines = find_contours_rebuild(img, 9000, 9600)
-    lines = find_contours_rebuild(img, 1000, 1130)
-
-    x = [x[0] for x in lines[0]]
-    print(x)
-
-    y = np.array([x[1] for x in lines[0]])
-    np.array([1, 1, 1])
-
-    print(coefficient_reg_inv(x, y))
-    k, b = coefficient_reg_inv(x, y)
 
 
-    def predict(k, b, x_scale):
-        y_pred = [k * val + b for val in x_scale]
-        return y_pred
+   # item = np.int0(lines[0])
+    # with open('coords.txt', 'w', encoding='utf-8') as file:
+    #     for line in item:
+    #         x, y = line
+    #         srr = f'{x} | {y}\n'
+    #         file.write(srr)
+   # print(item)
 
-    y_predict = predict(k, b, x)
 
-    plt.plot(x, y, 'o', label='Истинные значения')
-    plt.plot(x, y_predict, '*', label='Расчетные значения')
-    plt.legend(loc='best', fontsize=12)
-    plt.xlabel('x (порядковый номер измерения)', fontsize=14)
-    plt.ylabel('y (оценка температуры)', fontsize=14)
-    plt.show()
+    # x = [x[0] for x in lines[0]]
+    # print(x)
 
-    # S = Sample(start=345, stop=398, step=1, math_expectation=0,
-    #            dispersion=0, theta=y)
-    # mnk = S.mnk_estimate()
-    # print('МНК-оценка:   {}'.format(mnk))
+    # y = np.array([x[1] for x in lines[0]])
+    # np.array([1, 1, 1])
+
+    # print(coefficient_reg_inv(x, y))
+    # k, b = coefficient_reg_inv(x, y)
+
+
+    # def predict(k, b, x_scale):
+    #     y_pred = [k * val + b for val in x_scale]
+    #     return y_pred
+    #
+    # y_predict = predict(k, b, x)
+    #
+    # plt.plot(x, y, 'o', label='Истинные значения')
+    # plt.plot(x, y_predict, '*', label='Расчетные значения')
+    # plt.legend(loc='best', fontsize=12)
+    # plt.xlabel('x (порядковый номер измерения)', fontsize=14)
+    # plt.ylabel('y (оценка температуры)', fontsize=14)
+    # plt.show()
+
+
 
  # ----------------------------------------------------------------------
 

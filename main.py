@@ -184,6 +184,7 @@ def binarization_analyzer():
     fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/super_crop/3.tif'
     fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/scan0001.tif'
     fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/1.jpg'
+    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/brightness_128/scan0001.tif'
 
     img = cv.imread(fn)
 
@@ -220,10 +221,10 @@ def binarization_analyzer():
         # thresh = cv.erode(thresh, kernel)
         # thresh = cv2.dilate(thresh, kernel)
 
-        #ret, thresh = cv.threshold(img, h1, 255, cv.THRESH_BINARY)
+        ret, thresh = cv.threshold(img, h1, 255, cv.THRESH_BINARY)
         #ret, thresh = cv.threshold(img, h1, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 
-        contours0, hierarchy = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        contours0, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
 
         for cnt in contours0:
@@ -231,26 +232,27 @@ def binarization_analyzer():
             area = int(rect[1][0] * rect[1][1])  # вычисление площади прямоугольника
             box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
             box = np.int0(box)  # округление координат
-            print(area)
+            #print(area)
             #if area > s1*10:
-            if 5_0 < area < 1060291:  # если площадь прямогульника больше  < 9_000_000
+            if 90000 < area < 33227154:  # если площадь прямогульника больше  < 9_000_000
             #if 100 < area < 400:
                 print(f'area params: {area}')
                 cv.drawContours(img, [box], 0, (0, 0, 255), 8)  # отрисовка прямогуольников размером больше 700_000
-                color_yellow = (0, 255, 255)
-                center = (int(rect[0][0]), int(rect[0][1]))
-                cv.putText(img, f'{area}', (center[0] + 20, center[1] - 20),
-                           cv.FONT_HERSHEY_SIMPLEX, 1, color_yellow, 2)
+                fr = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/boba.tif'
+                cv.imwrite(fr, img)
+                # color_yellow = (0, 255, 255)
+                # center = (int(rect[0][0]), int(rect[0][1]))
+                # cv.putText(img, f'{area}', (center[0] + 20, center[1] - 20),
+                #            cv.FONT_HERSHEY_SIMPLEX, 1, color_yellow, 2)
 
-                fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/boba.tif'
-                cv.imwrite(fn, img)
 
-            break
+
+
 
 
         # cv2.resizeWindow('result', 1000, 1000)  # уменьшаем картинку в 3 раза
             cv.imshow('result', img)
-        break
+       # break
         ch = cv.waitKey(5)
         if ch == 27:
             break
@@ -454,5 +456,5 @@ def find_circles_analyze():
 if __name__ == '__main__':
     main()
 
-    #binarization_analyzer()
+   # binarization_analyzer()
 
