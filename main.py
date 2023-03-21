@@ -3,91 +3,6 @@ import cv2 as cv
 
 import math
 
-def non():
-    font = cv.FONT_HERSHEY_SIMPLEX
-
-    #print("Enter image name:")
-    #img_name = input()
-    #img_name = 'scan0008_reverse'
-    #print(f"Selected image: {img_name}.tif")
-    #img = cv2.imread(img_name+".tif")
-    #img_copy = img.copy()
-    img1 = cv.imread("scan0001_rot.tif")
-    img2 = cv.imread("scan0002_rot.tif")
-    img3 = cv.imread("scan0003_rot.tif")
-
-    img1 = cv.GaussianBlur(img1, ksize=(9, 9), sigmaX =0, sigmaY=0)
-    img2 = cv.GaussianBlur(img2, ksize=(9, 9), sigmaX =0, sigmaY=0)
-    img3 = cv.GaussianBlur(img2, ksize=(9, 9), sigmaX =0, sigmaY=0)
-
-    img1 = np.uint16(img1)
-    img2 = np.uint16(img2)
-    img3 = np.uint16(img3)
-
-    res = np.uint8((img1+img2+img3)//3)
-
-    #r = np.multiply(r,res)
-    cv.imshow("red", res)
-    cv.imwrite("scan000_gauss9.tif", res)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-
-def old_main():
-    path = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/scan0001.tif'
-
-    # path = 'C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/scan0001.tif'
-
-    image = cv.imread(path)
-
-    bin_img = binaryze(image, threshold=160)  # 160
-    # cv.imwrite('C:/Users/vadik/Desktop/STUDY/diplom/10.03.2023/binar.tif', bin_img)
-
-    rects = find_contours(bin_img, more_than=2000_000)  # 2000_000
-    print(rects)
-
-    i = 1
-    for rect in rects:  # проходимся по найденным контурам
-        # cropped_images = crop_image(image, rect)
-        box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
-        box = np.int0(box)  # округление координат
-        # x_start, y_start = min(box[0:2][0][0], box[0:2][1][0]), min(box[0:2][0][1], box[0:2][1][1])
-        # x_stop, y_stop = max(box[2:][0][0], box[2:][1][0]), max(box[2:][0][1], box[2:][1][1])
-
-        x_s = [pair[0] for pair in box]
-        y_s = [pair[1] for pair in box]
-
-        print(x_s, y_s)
-
-        x_start, y_start = min(x_s), min(y_s)
-        x_stop, y_stop = max(x_s), max(y_s)
-
-        print(x_start, y_start)
-        print(x_stop, y_stop)
-
-        crop = image[y_start:y_stop, x_start:x_stop]
-
-        y_range, x_range, _ = crop.shape
-        cv.namedWindow("cropped_images", cv.WINDOW_NORMAL)  # создаем главное окно
-        cv.resizeWindow('cropped_images', int(x_range // 8), int(y_range // 8))  # уменьшаем картинку в 3 раза
-        cv.imshow('cropped_images', crop)
-
-        # bin_img_2 = binaryze(crop, threshold=135)
-        # rects_2 = find_contours(bin_img_2, more_than=2000_000)  # 2000_000
-        #
-        # for rect in rects_2:  # проходимся по найденным контурам
-        #     box_2 = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
-        #     box_2 = np.int0(box_2)  # округление координа
-        #
-        #     for i in range(4):
-        #         a_start_x, a_start_y = box_2[i][0], box_2[i][1]
-        #
-        #         angle_crop = image[a_start_y-300:a_start_y+300, a_start_x-300:a_start_x+300]
-        #         print(angle_crop)
-        #         cv.imshow('angcfle', angle_crop)
-        #         cv.waitKey(0)
-        i += 1
-        cv.waitKey(0)
-
 
 # на вход подать изображение и область (распознанную) по которой обрезать
 def crop_rot_rect(img, rect):
@@ -180,11 +95,7 @@ def binarization_analyzer():
     # имя файла, который будем анализировать
     fn = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/1.tif'
     fn = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/scan0001.tif'
-    fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/1.tif'
-    fn = f'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/super_crop/3.tif'
-    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/scan0001.tif'
-    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/1.jpg'
-    fn = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/brightness_128/scan0001.tif'
+    fn = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/brightness_32/scan0001.tif'
 
     img = cv.imread(fn)
 
@@ -454,7 +365,31 @@ def find_circles_analyze():
 
 
 if __name__ == '__main__':
-    main()
+    #main()
 
-   # binarization_analyzer()
+    path = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/brightness_96/'
+    path_to_save = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/brightness_96/'
+
+    cnt = 10
+    r = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    r = [10]
+    for i in r:
+        p = path + f'scan00{i}.tif'
+        scan = cv.imread(p)
+        crop, rotated = crop_scans_crop(scan)
+
+
+        y_range, x_range, _ = crop.shape  # задаем рамзеры картинки
+        cv.namedWindow("result crop", cv.WINDOW_NORMAL)  # создаем главное окно
+        cv.resizeWindow('result crop', int(x_range // 6), int(y_range // 6))  # уменьшаем картинку в 3 раза
+
+        cv.imshow('result crop', crop)
+        #cv.waitKey(0)
+
+        p = path_to_save + f'{cnt}.tif'
+        cv.imwrite(p, crop)
+        cnt += 1
+
+
+   #binarization_analyzer()
 

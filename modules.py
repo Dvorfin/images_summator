@@ -125,9 +125,10 @@ def crop_scans(img):
 
 
 def crop_scans_crop(image):
-    bin_img = binaryze(image, threshold=141)
-    #rects = find_contours(bin_img, more_than=5_300_000, less_then=5_550_000)
-    rects = find_contours(bin_img, more_than=5723870, less_then=7588490)
+    #bin_img = binaryze(image, threshold=141)
+    bin_img = binaryze(image, threshold=145)
+    rects = find_contours(bin_img, more_than=5_300_000, less_then=5_550_000)
+    #rects = find_contours(bin_img, more_than=5766000, less_then=6449536)
 
     rect = rects[0]
     box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
@@ -163,12 +164,12 @@ def main():
     path = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/'
     path = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/'
 
-    path = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/brightness_128/'
+    path = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/brightness_32/'
     path_to_save = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/ultra/'
-    path_to_save = 'C:/Users/vadik/Desktop/STUDY/diplom/scans/10.03.2023/res/'
+    path_to_save = 'C:/Users/Root/Documents/MEGAsync/diplom/scans/10.03.2023/brightness_32/'
 
     cnt = 0
-    r = [1, 3, 4, 5, 6, 7, 8, 9]
+    r = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     for i in r:
         p = path + f'scan000{i}.tif'
         scan = cv.imread(p)
@@ -249,8 +250,3 @@ def show_contours(bin_image, more_than=0, less_then=10000_000_000):
 # 5) находим минимальный контур, по кот. далее будет обрезаться конечное изображение
 # 6) проходимся по углам минимального найденного контура и смотрим их окрестности на наличие реперных знаков
 # 7) определяем по расположению реперных знаков поворот и определеяем добавочный угол
-# 8)
-
-#
-#
-#

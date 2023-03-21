@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-#fffc cv from ito_lr_1 import *
 
 def binaryze(image, threshold=220):
     y_range, x_range, _ = image.shape
@@ -311,7 +310,10 @@ def find_contours_rebuild(img, more_than=0, less_then=2000):
 
 def find_countours_rebuild_2(img, more_than=0, less_then=2000):
     bin = binaryze(img, 133)
+   #bin = binaryze(img, 140)
     contours0, hierarchy = cv.findContours(image=bin.copy(), mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_NONE)
+
+
 
     # массив, куда будут записаны координаты 4-х линий прямоугольника
     lines_of_rectrangle = [[], [], [], []]
@@ -320,13 +322,18 @@ def find_countours_rebuild_2(img, more_than=0, less_then=2000):
 
     for cnt in contours0:
         if less_then > cnt.shape[0] > more_than:  # если размер контура найден
+
+            rect = cv.minAreaRect(cnt)  # пытаемся вписать прямоугольник
+            box = cv.boxPoints(rect)
+            print(f' Opencv rect = {rect}\n')
+
             print(f'Size of contour: {cnt.shape[0]}')
             for p in cnt:
                 for point in p:
                     coords_set.add((point[0], point[1]))
 
     # поиск точки с минимальным иксом
-    A = sorted(coords_set)
+    A = sorted(coords_set)[0:10]
     min_x = A[0][0]  # выбираем минимальный x
     A1 = []
     for p in A:  # проходимся по всем точкам с минимальными иксами
@@ -336,7 +343,7 @@ def find_countours_rebuild_2(img, more_than=0, less_then=2000):
     A = (min_x, sum(A1) // len(A1))     # записываем минимальный x и средний y
 
     # поиск точки с минимальным игриком
-    B = sorted(coords_set, key=lambda point: point[1])
+    B = sorted(coords_set, key=lambda point: point[1])[0:10]
     #print(B)
     min_y = B[0][1]
     B1 = []
@@ -347,7 +354,7 @@ def find_countours_rebuild_2(img, more_than=0, less_then=2000):
     B = (sum(B1) // len(B1), min_y)
 
     # поиск точки с максимальным иксом
-    C = sorted(coords_set, reverse=True)
+    C = sorted(coords_set, reverse=True)[0:10]
     max_x = C[0][0]
     C1 = []
     for p in C:
@@ -357,7 +364,8 @@ def find_countours_rebuild_2(img, more_than=0, less_then=2000):
     C = (max_x, sum(C1) // len(C1))
 
     # поиск точки с максимальным игриком
-    D = sorted(coords_set, reverse=True, key=lambda point: point[1])
+    D = sorted(coords_set, reverse=True, key=lambda point: point[1])[0:10]
+    # print(D)
     max_y = D[0][1]
     D1 = []
     for p in D:
@@ -371,22 +379,42 @@ def find_countours_rebuild_2(img, more_than=0, less_then=2000):
     print(f'Max x: {C}')
     print(f'Max y: {D}')
 
+
+    #------------------------------------------------------------
+    #   установки точки A в верхний левый угол
+    #------------------------------------------------------------
+
+    height, width, _ = img.shape
+
+    if (A[0] < width // 2) and (A[1] < height // 2):
+        angle_points = [A, B, C, D]
+    else:
+        angle_points = [B, C, D, A]
+
+    # координаты точек угов между которыми будут строиться линии
+    angles = [[angle_points[0], angle_points[1]],
+              [angle_points[1], angle_points[2]],
+              [angle_points[2], angle_points[3]],
+              [angle_points[3], angle_points[0]]]
+
+    #------------------------------------------------------------
+
+
     # отрисовка 4 точек с их координатами
-    angle_points = [A, B, C, D]
+    cnt = 1
     for point in angle_points:
-        cv.circle(img, point, 5, (0, 250, 0), 2)
+        cv.circle(img, point, 15, (0, 250, 0), 2)
         cv.putText(img, f'{point}', (point[0] - 40, point[1] + 20),
                    cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 250), 1)
-
+        cv.putText(img, f'{cnt}', (point[0] - 40, point[1] + 20),
+                   cv.FONT_HERSHEY_SIMPLEX, 10, (0, 0, 250), 10)
+        cnt += 1
 
 #--------------------------------------------------------------
     for cnt in contours0:
         if less_then > cnt.shape[0] > more_than:
             # цвета линий
             colors = [(10, 0, 204), (150, 10, 0), (0, 255, 0), (255, 255, 0)]
-
-            # координаты угов
-            angles = [[A, B], [B, C], [C, D], [D, A]]
 
             # проходимся по всем углам
             for i in range(4):
@@ -395,15 +423,26 @@ def find_countours_rebuild_2(img, more_than=0, less_then=2000):
                 x_r_min, x_r_max = min(point1[0], point2[0]), max(point1[0], point2[0])
                 y_r_min, y_r_max = min(point1[1], point2[1]), max(point1[1], point2[1])
 
+                # отрисовка прямогольников
+                #cv.rectangle(img, (x_r_min, y_r_min), (x_r_max, y_r_max), (0, 255, 255), 2)
+
+                if i % 2 == 0:  # если горизонтальная линия, то умньшаем прямогольник по ширине
+                    x_r_min += 5
+                    x_r_max -= 5
+                else:           # если вертиакльная линия, то умньшаем прямогольник по высоте
+                    y_r_min += 5
+                    y_r_max -= 5
+
                 # проходимся по точкам контура
                 for p in cnt:
                     for point in p:
                         point = np.int0(point)
                         # если точка контура лежит в пределах прямогольника, то записываем ее
-                        if (x_r_min + 1 < point[0] < x_r_max - 1) and (y_r_min + 1 < point[1] < y_r_max - 1):
+                        if (x_r_min < point[0] < x_r_max) and (y_r_min < point[1] < y_r_max):
                             # print(point)
                             # cv.drawContours(img, cnt, -1, (0, 255, 0), 2, cv.LINE_AA)   # отрсиоввываем найденный контур
                             cv.circle(img, point, 1, colors[i], 2)
+
                             lines_of_rectrangle[i].append(point)
 
                 # cv.drawContours(img, [box], 0, (255, 0, 100), 2)
@@ -420,32 +459,76 @@ def find_countours_rebuild_2(img, more_than=0, less_then=2000):
 
    # cv.imshow('res', img)
 
-def coefficient_reg_inv(x, y):
-    size = len(x)
-    # формируем и заполняем матрицу размерностью 2x2
-    A = np.empty((2, 2))
-    A[[0], [0]] = sum((x[i]) ** 2 for i in range(0, size))
-    A[[0], [1]] = sum(x)
-    A[[1], [0]] = sum(x)
-    A[[1], [1]] = size
-    # находим обратную матрицу
-    A = np.linalg.inv(A)
-    # формируем и заполняем матрицу размерностью 2x1
-    C = np.empty((2, 1))
-    C[0] = sum((x[i] * y[i]) for i in range(0, size))
-    C[1] = sum((y[i]) for i in range(0, size))
+ # на вход подать изображение и область (распознанную) по которой обрезать
+def crop_rot_rect(img, rect):
+    # rect ->  ((центр прямогуольника), (размер прямоугольника), угол наклона)
+    center, size, angle = rect[0], rect[1], rect[2]
+    center, size = tuple(map(int, center)), tuple(map(int, size))
 
-    # умножаем матрицу на вектор
-    ww = np.dot(A, C)
-    return ww[1], ww[0]
+    # get row and col num in img
+    height, width = img.shape[0], img.shape[1]
 
+    # calculate the rotation matrix
+    M = cv.getRotationMatrix2D(center=center, angle=angle, scale=1)  # формирует матрицу поворота
+    # rotate the original image
+    img_rot = cv.warpAffine(img, M, (width, height))  # вращает изображение
+
+    # now rotated rectangle becomes vertical, and we crop it
+    img_crop = cv.getRectSubPix(img_rot, size, center)
+
+    return img_crop
+
+from mnk import *
+
+
+# на вход подается изображения, 4 точки углов и размеры реперных точек
+def calc_rep_points(img, rect_p, more_than=0, less_then=2000):
+
+    res = dict()  # словарь {номер точки: количесво реперных}
+
+    for i in range(4):
+        x, y = rect_p[i]
+        x_start, x_stop = int(x - 110), int(x + 110)
+        y_start, y_stop = int(y - 110), int(y + 110)
+
+        angle_crop = img[y_start:y_stop, x_start:x_stop]
+        bin = binaryze(angle_crop, 133)
+        # bin = binaryze(img, 140)
+        contours0, hierarchy = cv.findContours(image=bin.copy(), mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_NONE)
+
+        rep_points_count = 0
+        for cnt in contours0:
+            if less_then > cnt.shape[0] > more_than:  # если размер контура найден
+                cv.drawContours(angle_crop, cnt, -1, (0, 255, 0), 2, cv.LINE_AA)  # отрсиоввываем найденный контур
+                rep_points_count += 1
+                cv.imshow('rer', angle_crop)
+
+        res.setdefault(f'angle {i + 1}', rep_points_count)
+
+    #print(f'value of points: {val}')
+    #cv.imwrite('res.tif', angle_crop)
+    print(res)
+    return res
 
 if __name__ == '__main__':
 
-    # path = '1.png'
+    # path = 'scan0001.tif'
     # img = cv.imread(path)
-    # #lines = find_contours_rebuild(img, 1600, 2000)
-    # find_angles(img, 1600, 2000)
+    #
+    # rect_p = [[1727.0285952885479, 2179.0351200594196], [3540.5480991205986, 2129.556276611963], [3618.312923626618, 5188.119682520727], [1804.637204090861, 5237.787610898264]]
+    # rect_p = [[1794.385782348759, 2035.1629830853062], [3608.9164144556707, 2081.553189936178], [3525.3533894389707, 5141.506662711139], [1711.3832180034078, 5092.913466630306]]
+    #
+    # calc_rep_points(img, rect_p, 42, 60)
+
+
+
+    # path = 'Screenshot_3.png'
+    # img = cv.imread(path)
+    # lines = find_countours_rebuild_2(img, 1000, 1108)
+
+    # angle = calc_avg_angle(lines)
+    # print(f'rotation angle = {angle}')
+
 
     # path = '1.png'
     # img = cv.imread(path)
@@ -472,59 +555,84 @@ if __name__ == '__main__':
 
     # path = '0.tif'
     # img = cv.imread(path)
-    #find_countours_rebuild_2(img, 9000, 12300)
+    # lines = find_countours_rebuild_2(img, 9000, 12300)
+
+    # path = '2.tif'
+    # img = cv.imread(path)
+    # lines = find_countours_rebuild_2(img, 9000, 9791)
 
 
-    path = '2.tif'
+# ---------------------------------------------------------------------
+#            WORKS
+# ---------------------------------------------------------------------
+    path = 'scan0006.tif'
     img = cv.imread(path)
-    find_countours_rebuild_2(img, 9000, 9791)
+    lines = find_countours_rebuild_2(img, 9000, 9883)
 
-    # Size
-    # of
-    # contour: 12308
-    # Size
-    # of
-    # contour: 9587
+    for i in range(4):
+        lines[i] = np.int0(lines[i])
+
+    angle, lines_coefs = calc_avg_angle(lines)
+    rect_p = calc_intersection_points(lines_coefs)
+
+    center = calc_center(rect_p)
+    size = calc_rect_size(rect_p)
+
+    img = cv.imread(path)
+    rep_points_dict = calc_rep_points(img, rect_p, 40, 60)
+
+    # если нужно повернуть налево
+    if rep_points_dict['angle 1'] == 4 and rep_points_dict['angle 4'] == 3:
+        angle += 90
+        size = (size[1], size[0])
+    else:   # если нужно повернуть направо
+        angle -= 90
+        size = (size[1], size[0])
+
+    #print(rect_p)
+
+    rect = (center, size, angle)
+
+    print(f'Calc rect: {rect}')
 
 
+    img = cv.imread(path)
+    crop = crop_rot_rect(img, rect)
+
+    #cv.imshow('countours', crop)
+    cv.imwrite('crop_res.tif', crop)
+
+# ---------------------------------------------------------------------
+
+
+
+    # path = '2.tif'
+    # img = cv.imread(path)
+    # lines = find_countours_rebuild_2(img, 9000, 9791)
+
+    # path = '0.png'
+    # img = cv.imread(path)
+    # find_countours_rebuild_2(img, 1000, 1878)
 
     #find_contours(img, 1000, 1130)
     #find_contours(img, 9000, 9600)
 
     #lines = find_contours_rebuild(img, 9000, 9600)
 
-
-   # item = np.int0(lines[0])
-    # with open('coords.txt', 'w', encoding='utf-8') as file:
-    #     for line in item:
-    #         x, y = line
-    #         srr = f'{x} | {y}\n'
-    #         file.write(srr)
-   # print(item)
-
-
-    # x = [x[0] for x in lines[0]]
-    # print(x)
-
-    # y = np.array([x[1] for x in lines[0]])
-    # np.array([1, 1, 1])
-
-    # print(coefficient_reg_inv(x, y))
-    # k, b = coefficient_reg_inv(x, y)
+    # for i in range(4):
+    #     item = np.int0(lines[i])
+    #     with open(f'line{i}.txt', 'w', encoding='utf-8') as file:
+    #         for line in item:
+    #             x, y = line
+    #             srr = f'{x} | {y}\n'
+    #             file.write(srr)
+    #print(item)
 
 
-    # def predict(k, b, x_scale):
-    #     y_pred = [k * val + b for val in x_scale]
-    #     return y_pred
-    #
-    # y_predict = predict(k, b, x)
-    #
-    # plt.plot(x, y, 'o', label='Истинные значения')
-    # plt.plot(x, y_predict, '*', label='Расчетные значения')
-    # plt.legend(loc='best', fontsize=12)
-    # plt.xlabel('x (порядковый номер измерения)', fontsize=14)
-    # plt.ylabel('y (оценка температуры)', fontsize=14)
-    # plt.show()
+
+
+
+
 
 
 
